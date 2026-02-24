@@ -4,7 +4,7 @@ function setup() {
 }
 
 function draw() {
-  /*line(0,250,800,250);
+  line(0,250,800,250);
   stroke("purple");
   line(400,0,400,800);
   stroke(255, 0, 0);
@@ -13,11 +13,10 @@ function draw() {
   fill(0,0,255)
   noStroke();
   circle(400,250, 100);
-  fill(0)*/
+  fill(0)
 
 
-
-/*izquierda  
+ 
   stroke(0);
   line(30,20,185,20);
   stroke(126);
@@ -28,7 +27,7 @@ function draw() {
 
 
 
-derecha
+
   stroke(0);
   line(615,20,770,20);
   stroke(126);
@@ -38,7 +37,6 @@ derecha
   line(615,175,615,20);
 
 
-izquierda  abajo 
   stroke(0);
   line(615,250,770,250);
   stroke(126);
@@ -48,7 +46,7 @@ izquierda  abajo
   line(615,405,615,250); 
 
 
-derecha  abajo 
+
   stroke(0);
   line(30,250,185,250);
   stroke(126);
@@ -56,7 +54,5 @@ derecha  abajo
   stroke(255);
   line(185,405,30,405);
   line(30,405,30,250);
-
-*/
 
 }

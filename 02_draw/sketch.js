@@ -41,8 +41,7 @@ function draw() {
         if (Math.abs(velocidadY) < 1) {
             velocidadY = 0;
             y = 380;
-        }
-    }
+        }    }
     
     // Rebote en la parte superior
     if (y < 20) {

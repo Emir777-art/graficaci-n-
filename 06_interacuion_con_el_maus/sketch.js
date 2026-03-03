@@ -1,4 +1,4 @@
-let figuras = [];
+let figuras = []; 
 
 function setup() {
   createCanvas(600, 400);

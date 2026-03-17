@@ -6,8 +6,7 @@
  * * MÉTODOS NUMÉRICOS - Unidad 1
  * PROYECTO FINAL: Escena Interactiva "Jardín Matemático"
  * 
- * Dr. Juan Gabriel Loaiza
- * Febrero 2026
+ * 
  * 
  * Conceptos integrados:
  * ✓ Múltiples figuras geométricas
@@ -32,7 +31,7 @@ let animacionActiva = true;
 let velocidad = 1;
 
 // ============================================================
-// 🌞🌙 CICLO DÍA/NOCHE
+//  CICLO DÍA/NOCHE
 // ============================================================
 let astro = {
   // Posición en arco
@@ -594,40 +593,3 @@ function mouseWheel(event) {
   velocidad = constrain(velocidad, 0.25, 3);
 }
 
-// ============================================================
-// DESCRIPCIÓN DEL CICLO DÍA/NOCHE
-// ============================================================
-
-/*
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║     🌞🌙 CICLO DÍA/NOCHE AUTOMÁTICO 🌙🌞                    ║
-║                                                              ║
-╠══════════════════════════════════════════════════════════════╣
-║                                                              ║
-║  📐 MATEMÁTICA DEL MOVIMIENTO:                               ║
-║                                                              ║
-║  El astro (sol/luna) se mueve en un ARCO usando:            ║
-║                                                              ║
-║  x = centroX + radio × cos(ángulo)                           ║
-║  y = centroY - radio × sin(ángulo)                           ║
-║                                                              ║
-║  • ángulo: 0 → Sale por la izquierda                         ║
-║  • ángulo: PI/2 → Cenit (punto más alto)                    ║
-║  • ángulo: PI → Se pone por la derecha                       ║
-║                                                              ║
-║  🔄 TRANSFORMACIÓN:                                           ║
-║  Cuando ángulo = PI (puesta), CAMBIA:                        ║
-║  • Sol → Luna (inicia noche)                                 ║
-║  • Luna → Sol (inicia día)                                   ║
-║                                                              ║
-║  🌟 ELEMENTOS QUE CAMBIAN:                                    ║
-║  • DÍA:  Nubes, mariposa, rocío, colores brillantes         ║
-║  • NOCHE: Estrellas, luciérnagas, niebla, luz en casa       ║
-║                                                              ║
-║  🎮 NUEVOS CONTROLES:                                        ║
-║  • Tecla N: Cambia manualmente día/noche                     ║
-║  • Rueda mouse: Ajusta velocidad del ciclo                   ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-*/

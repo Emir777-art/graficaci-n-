@@ -1,10 +1,10 @@
 /*
  * PROYECTO INTEGRADOR - UNIDAD 2
  * Escena 2D Interactiva: Transformaciones + Curvas + Fractal + Texto
- * Autor: [cesar emir lizarraga felix]
+ * Autor: cesar emir lizarraga felix
  * Fecha: 2026
  * 
- * VERSIÓN CORREGIDA - Mejor organización visual
+ * 
  */
 
 // ============================================
@@ -143,9 +143,9 @@ function dibujarAreas() {
   fill(100);
   noStroke();
   textSize(12);
-  text("🔵 ÁREA DEL OBJETO", 600, 200);
-  text("🟢 ÁREA DE LA CURVA BÉZIER", 400, 480);
-  text("🌳 ÁREA DEL FRACTAL", 950, 100);
+  text(" ÁREA DEL OBJETO", 600, 200);
+  text(" ÁREA DE LA CURVA BÉZIER", 400, 480);
+  text(" ÁREA DEL FRACTAL", 950, 100);
 }
 
 // ============================================
@@ -340,7 +340,7 @@ function dibujarTexto() {
   fill(40, 40, 80);
   stroke(255, 200, 200);
   strokeWeight(1);
-  text("🎨 PROYECTO INTEGRADOR - GRAFICACIÓN 2D", 0, 0);
+  text(" PROYECTO INTEGRADOR - GRAFICACIÓN 2D", 0, 0);
   pop();
   
   // Instrucciones (abajo)
@@ -350,8 +350,8 @@ function dibujarTexto() {
   fill(60);
   stroke(255);
   strokeWeight(0.5);
-  text("🖱️ Arrastra el ROBOT para moverlo | 🔵 Arrastra puntos VERDES de la curva | 🌳 Sliders abajo", 0, 0);
-  text("📌 Teclas 1-2-3: cambiar modo | R: reiniciar robot | C: reiniciar curva", 0, 20);
+  text(" Arrastra el ROBOT para moverlo | 🔵 Arrastra puntos VERDES de la curva | 🌳 Sliders abajo", 0, 0);
+  text(" Teclas 1-2-3: cambiar modo | R: reiniciar robot | C: reiniciar curva", 0, 20);
   pop();
   
   // Nombre del autor
@@ -359,7 +359,7 @@ function dibujarTexto() {
   translate(1200, 720);
   textSize(16);
   fill(100, 0, 100);
-  text("✍️ [cesar emir lizarraga felix] - 16/03/2026", 0, 0);
+  text(" cesar emir lizarraga felix - 16/03/2026", 0, 0);
   pop();
   
   // Texto rotado decorativo

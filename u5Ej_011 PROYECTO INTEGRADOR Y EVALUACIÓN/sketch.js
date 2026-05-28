@@ -1,448 +1,277 @@
 // ============================================================
-// PROYECTO INTEGRADOR - SUPER MARIO BROS (1985)
-// Primeros 5 niveles (Mundo 1-1, 1-2, 1-3, 1-4, 2-1)
+// PROYECTO INTEGRADOR - UNIDAD 5
+// "CATCH THE RAINBOW CUBES"
 // ============================================================
-// Controles:
-// → (derecha)  - mover
-// ← (izquierda) - mover
-// ↑ o espacio  - saltar
-// R            - reiniciar nivel
-// N            - siguiente nivel (para pruebas)
+// Autor: Estudiante
+// Descripción: Juego interactivo donde el jugador controla una nave
+// que debe atrapar cubos de colores que caen. Incluye:
+// - Animación continua (caída, interpolación, partículas)
+// - Interacción teclado/mouse
+// - Múltiples objetos (nave, cubos, partículas)
+// - Efectos visuales (trails, cambio de color, partículas)
+// - Interpolación (lerp para suavizado y movimiento)
 // ============================================================
 
-let nivelActual = 0;
-let niveles = [];
-let mario;
-let bloques = [];
-let enemigos = [];
-let monedas = [];
-let camX = 0;
-let juegoActivo = true;
-let tiempoInvencible = 0;
+// Variables del juego
+let naveX, naveY;
+let anchoNave = 60;
+let altoNave = 40;
+let objetos = [];      // Cubos que caen
+let particulas = [];   // Efectos visuales
 let puntuacion = 0;
 let vidas = 3;
-let tamañoBloque = 40;
+let juegoActivo = true;
 
-// Configuración de niveles (ancho en bloques)
-const nivelesData = [
-  { // Nivel 0: Mundo 1-1
-    ancho: 40,
-    fondo: [135, 206, 235], // cielo
-    suelo: [
-      "########################################",
-      "#                                      #",
-      "#                                      #",
-      "#                                      #",
-      "#                                      #",
-      "#         ?   ?                        #",
-      "#                      ###             #",
-      "#    ###                               #",
-      "#                                      #",
-      "########################################"
-    ],
-    enemigos: [[10, 7], [20, 7], [30, 7]],
-    monedas: [[12, 5], [13, 5], [14, 5], [25, 5], [26, 5], [27, 5]]
-  },
-  { // Nivel 1: Mundo 1-2 (subterráneo)
-    ancho: 50,
-    fondo: [50, 50, 80], // oscuro
-    suelo: [
-      "##################################################",
-      "#                                                #",
-      "#                                                #",
-      "#     ?         ?                               #",
-      "#                    ####                       #",
-      "#                                                #",
-      "#   ####                                         #",
-      "#                                                #",
-      "#                                                #",
-      "##################################################"
-    ],
-    enemigos: [[15, 7], [30, 7], [40, 7]],
-    monedas: [[20, 4], [21, 4], [22, 4], [35, 5], [36, 5]]
-  },
-  { // Nivel 2: Mundo 1-3 (plataformas aéreas)
-    ancho: 45,
-    fondo: [135, 206, 235],
-    suelo: [
-      "#############################################",
-      "#                                           #",
-      "#     ###            ###                   #",
-      "#                     ###                  #",
-      "#                          ###              #",
-      "#                                           #",
-      "#    ###                                    #",
-      "#                                           #",
-      "#                                           #",
-      "#############################################"
-    ],
-    enemigos: [[10, 6], [25, 5], [35, 6]],
-    monedas: [[12, 4], [13, 4], [14, 4], [28, 4], [29, 4], [30, 4]]
-  },
-  { // Nivel 3: Mundo 1-4 (castillo con lava)
-    ancho: 35,
-    fondo: [80, 40, 40],
-    suelo: [
-      "###################################",
-      "#                                 #",
-      "#                                 #",
-      "#    ?                            #",
-      "#                                 #",
-      "#                                 #",
-      "#                                 #",
-      "#                                 #",
-      "#                                 #",
-      "###################################"
-    ],
-    enemigos: [[10, 7], [20, 7], [28, 7]],
-    monedas: [[15, 5], [16, 5], [17, 5], [30, 5]]
-  },
-  { // Nivel 4: Mundo 2-1 (desierto)
-    ancho: 48,
-    fondo: [255, 200, 100],
-    suelo: [
-      "################################################",
-      "#                                              #",
-      "#                                              #",
-      "#       ?         ?                           #",
-      "#                     ###                      #",
-      "#                                              #",
-      "#   ###                                        #",
-      "#                                              #",
-      "#                                              #",
-      "################################################"
-    ],
-    enemigos: [[12, 7], [22, 7], [32, 7], [42, 7]],
-    monedas: [[18, 5], [19, 5], [28, 5], [29, 5], [38, 5]]
+// Variables para interpolación (movimiento suave)
+let naveXSuave = 0;
+let targetX = 0;
+
+// Colores dinámicos
+let colorFondo;
+
+// Efecto de ghost frames (onion skinning)
+let historialPosiciones = [];
+
+function setup() {
+  createCanvas(800, 600);
+  naveY = height - 70;
+  naveXSuave = width / 2;
+  targetX = width / 2;
+  naveX = width / 2;
+  
+  // Texto inicial
+  textAlign(CENTER, CENTER);
+  textSize(20);
+  
+  // Generar objetos cada cierto tiempo
+  setInterval(() => {
+    if (juegoActivo) {
+      objetos.push(new ObjetoCaida());
+    }
+  }, 800);
+}
+
+function draw() {
+  // --- 1. ANIMACIÓN Y EFECTOS VISUALES (Background con transparencia para trails) ---
+  // Fondo con opacidad baja para crear efecto de estela (trail)
+  background(0, 0, 0, 30);
+  
+  // Cambio de color dinámico según puntuación (interpolación de color)
+  let r = lerp(0, 255, puntuacion / 20);
+  let g = lerp(0, 128, sin(frameCount * 0.02) * 0.5 + 0.5);
+  let b = lerp(100, 255, 1 - (puntuacion / 30));
+  colorFondo = color(r, g, b);
+  
+  // --- 2. INTERPOLACIÓN DE MOVIMIENTO (suavizado de la nave) ---
+  // Usando lerp para mover la nave suavemente hacia el mouse
+  if (juegoActivo) {
+    targetX = constrain(mouseX, 40, width - 40);
+    naveXSuave = lerp(naveXSuave, targetX, 0.1);
+    naveX = naveXSuave;
   }
-];
+  
+  // --- 3. ONION SKINNING / TRAILS de la nave (ghost frames) ---
+  historialPosiciones.push({ x: naveX, y: naveY });
+  if (historialPosiciones.length > 10) {
+    historialPosiciones.shift();
+  }
+  for (let i = 0; i < historialPosiciones.length; i++) {
+    let alpha = map(i, 0, historialPosiciones.length, 30, 150);
+    fill(255, 255, 100, alpha);
+    noStroke();
+    ellipse(historialPosiciones[i].x, historialPosiciones[i].y, anchoNave * 0.8, altoNave * 0.8);
+  }
+  
+  // --- 4. DIBUJAR NAVES (objeto principal) ---
+  // Efecto de "respiración" con escala
+  let escala = 1 + sin(frameCount * 0.1) * 0.05;
+  push();
+  translate(naveX, naveY);
+  scale(escala);
+  fill(100, 200, 255);
+  stroke(255);
+  strokeWeight(2);
+  ellipse(0, 0, anchoNave, altoNave);
+  fill(255, 100, 100);
+  triangle(-15, -10, 0, -25, 15, -10);
+  fill(255);
+  ellipse(-15, 0, 10, 15);
+  ellipse(15, 0, 10, 15);
+  fill(0);
+  ellipse(-15, 0, 5, 8);
+  ellipse(15, 0, 5, 8);
+  pop();
+  
+  // --- 5. ACTUALIZAR Y DIBUJAR OBJETOS CAÍDA (múltiples objetos) ---
+  for (let i = objetos.length - 1; i >= 0; i--) {
+    let obj = objetos[i];
+    obj.actualizar();
+    obj.mostrar();
+    
+    // Colisión con la nave (distancia interpolada)
+    let distancia = dist(naveX, naveY, obj.x, obj.y);
+    if (distancia < anchoNave / 2 + obj.tamano / 2) {
+      objetos.splice(i, 1);
+      puntuacion++;
+      
+      // Crear partículas al atrapar (efecto visual)
+      for (let j = 0; j < 10; j++) {
+        particulas.push(new Particula(obj.x, obj.y, obj.color));
+      }
+      
+      // Interpolación de sonido visual: cambiar color de fondo momentáneo
+      // (simulado con un flash blanco)
+      fill(255, 100);
+      rect(0, 0, width, height);
+    }
+    // Si el objeto llega al fondo, perder vida
+    else if (obj.y > height + 30) {
+      objetos.splice(i, 1);
+      vidas--;
+      if (vidas <= 0) {
+        juegoActivo = false;
+      }
+    }
+  }
+  
+  // --- 6. SISTEMA DE PARTÍCULAS (efectos visuales) ---
+  for (let i = particulas.length - 1; i >= 0; i--) {
+    particulas[i].actualizar();
+    particulas[i].mostrar();
+    if (particulas[i].vida <= 0) {
+      particulas.splice(i, 1);
+    }
+  }
+  
+  // --- 7. MOSTRAR INTERFAZ (texto, puntuación, vidas) ---
+  fill(255);
+  noStroke();
+  textSize(24);
+  text("✨ Puntos: " + puntuacion, width / 2, 50);
+  textSize(20);
+  text("💖 Vidas: " + vidas, width / 2, 90);
+  
+  if (!juegoActivo) {
+    textSize(40);
+    fill(255, 0, 0);
+    text("GAME OVER", width / 2, height / 2);
+    textSize(20);
+    fill(255);
+    text("Presiona 'R' para reiniciar", width / 2, height / 2 + 50);
+  } else {
+    textSize(14);
+    fill(200);
+    text("Mueve el mouse | Atrapa los cubos 🎨", width / 2, height - 20);
+  }
+  
+  // Mostrar FPS (opcional)
+  fill(255, 150);
+  textSize(12);
+  text("FPS: " + floor(frameRate()), width - 60, 20);
+}
 
-// Clase Mario
-class Mario {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.vx = 0;
-    this.vy = 0;
-    this.ancho = 30;
-    this.alto = 30;
-    this.enSuelo = true;
-    this.direccion = 1; // 1 derecha, -1 izquierda
-    this.grande = false;
+// ============================================================
+// CLASE OBJETO QUE CAE (con interpolación de tamaño y color)
+// ============================================================
+class ObjetoCaida {
+  constructor() {
+    this.x = random(50, width - 50);
+    this.y = -30;
+    this.tamano = random(20, 50);
+    this.velocidad = random(2, 6);
+    // Color con interpolación aleatoria
+    this.color = color(
+      random(100, 255),
+      random(100, 255),
+      random(100, 255)
+    );
+    this.rotacion = 0;
+    this.tipo = floor(random(2)); // 0 = cuadrado, 1 = círculo
   }
   
   actualizar() {
-    if (!juegoActivo) return;
-    
-    // Movimiento horizontal
-    let aceleracion = 0;
-    if (keyIsDown(RIGHT_ARROW)) {
-      aceleracion = 0.5;
-      this.direccion = 1;
-    }
-    if (keyIsDown(LEFT_ARROW)) {
-      aceleracion = -0.5;
-      this.direccion = -1;
-    }
-    this.vx = this.vx * 0.9 + aceleracion;
-    this.vx = constrain(this.vx, -5, 5);
-    this.x += this.vx;
-    
-    // Salto
-    if ((keyIsDown(UP_ARROW) || keyIsDown(32)) && this.enSuelo) {
-      this.vy = -10;
-      this.enSuelo = false;
-    }
-    
-    // Gravedad
-    this.vy += 0.5;
-    this.y += this.vy;
-    
-    // Colisión con el suelo (bloques)
-    this.enSuelo = false;
-    for (let bloque of bloques) {
-      if (this.colisionConBloque(bloque)) {
-        if (this.vy > 0 && this.y + this.alto - this.vy <= bloque.y) {
-          this.y = bloque.y - this.alto;
-          this.vy = 0;
-          this.enSuelo = true;
-        } else if (this.vy < 0 && this.y >= bloque.y + bloque.alto) {
-          this.y = bloque.y + bloque.alto;
-          this.vy = 0;
-        } else if (this.vx > 0) {
-          this.x = bloque.x - this.ancho;
-        } else if (this.vx < 0) {
-          this.x = bloque.x + bloque.ancho;
-        }
-      }
-    }
-    
-    // Límites del nivel
-    let limiteIzq = camX + 100;
-    let limiteDer = camX + width - 100;
-    if (this.x < limiteIzq && camX > 0) {
-      this.x = limiteIzq;
-    }
-    if (this.x > limiteDer && camX < (niveles[nivelActual].ancho * tamañoBloque - width)) {
-      this.x = limiteDer;
-    }
-    if (this.x < 0) this.x = 0;
-    if (this.x > niveles[nivelActual].ancho * tamañoBloque - this.ancho) {
-      // Fin del nivel
-      cambiarNivel(1);
-    }
-    
-    // Caída al vacío
-    if (this.y > height) {
-      perderVida();
-    }
+    this.y += this.velocidad;
+    this.rotacion += 0.05;
+    // Interpolación de tamaño que oscila (efecto visual)
+    this.tamano = lerp(this.tamano, this.tamano + sin(frameCount * 0.02) * 2, 0.05);
   }
   
-  colisionConBloque(b) {
-    return (this.x < b.x + b.ancho && this.x + this.ancho > b.x &&
-            this.y < b.y + b.alto && this.y + this.alto > b.y);
-  }
-  
-  dibujar() {
+  mostrar() {
     push();
-    translate(this.x + this.ancho/2, this.y + this.alto/2);
-    if (this.direccion === -1) scale(-1, 1);
-    fill(this.grande ? 255 : 255, 0, 0);
-    rect(-this.ancho/2, -this.alto/2, this.ancho, this.alto);
-    fill(0);
-    ellipse(-this.ancho/4, -this.alto/4, 6, 6);
-    ellipse(this.ancho/4, -this.alto/4, 6, 6);
-    fill(139, 69, 19);
-    rect(-this.ancho/2, this.alto/2 - 5, this.ancho, 10);
+    translate(this.x, this.y);
+    rotate(this.rotacion);
+    fill(this.color);
+    stroke(255);
+    strokeWeight(2);
+    if (this.tipo === 0) {
+      rectMode(CENTER);
+      rect(0, 0, this.tamano, this.tamano);
+    } else {
+      circle(0, 0, this.tamano);
+    }
     pop();
   }
 }
 
-// Clase Bloque
-class Bloque {
-  constructor(x, y, tipo) {
+// ============================================================
+// CLASE PARTÍCULA (efecto visual al atrapar)
+// ============================================================
+class Particula {
+  constructor(x, y, col) {
     this.x = x;
     this.y = y;
-    this.ancho = tamañoBloque;
-    this.alto = tamañoBloque;
-    this.tipo = tipo; // 'suelo', '?' , 'ladrillo'
-    this.activo = true;
-  }
-  
-  dibujar() {
-    if (!this.activo) return;
-    fill(150, 100, 50);
-    if (this.tipo === '?') fill(255, 255, 0);
-    if (this.tipo === 'ladrillo') fill(200, 100, 50);
-    rect(this.x, this.y, this.ancho-1, this.alto-1);
-  }
-}
-
-// Clase Enemigo (Goomba)
-class Enemigo {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.ancho = 30;
-    this.alto = 30;
-    this.vx = -0.8;
-    this.vida = true;
+    this.vx = random(-3, 3);
+    this.vy = random(-5, -1);
+    this.vida = 255;
+    this.color = col;
+    this.tamano = random(5, 12);
   }
   
   actualizar() {
-    if (!this.vida) return;
     this.x += this.vx;
-    // Rebote simple en bordes
-    if (this.x < 0 || this.x > niveles[nivelActual].ancho * tamañoBloque - this.ancho) {
-      this.vx *= -1;
-    }
-    // Caída
-    if (this.y < height - this.alto) this.y += 2;
+    this.y += this.vy;
+    this.vy += 0.2; // gravedad
+    this.vida -= 5;
   }
   
-  dibujar() {
-    if (!this.vida) return;
-    fill(139, 69, 19);
-    ellipse(this.x + this.ancho/2, this.y + this.alto/2, this.ancho, this.alto);
-    fill(0);
-    ellipse(this.x + this.ancho*0.3, this.y + this.alto*0.4, 5, 5);
-    ellipse(this.x + this.ancho*0.7, this.y + this.alto*0.4, 5, 5);
-    fill(0);
-    ellipse(this.x + this.ancho/2, this.y + this.alto*0.7, 8, 5);
-  }
-  
-  colisionConMario(mario) {
-    return (this.x < mario.x + mario.ancho && this.x + this.ancho > mario.x &&
-            this.y < mario.y + mario.alto && this.y + this.alto > mario.y);
-  }
-}
-
-// Moneda
-class Moneda {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.ancho = 20;
-    this.alto = 20;
-    this.coleccionada = false;
-  }
-  
-  dibujar() {
-    if (this.coleccionada) return;
-    fill(255, 215, 0);
-    ellipse(this.x + this.ancho/2, this.y + this.alto/2, this.ancho, this.alto);
-    fill(255, 100, 0);
-    ellipse(this.x + this.ancho/2, this.y + this.alto/2, this.ancho*0.6, this.alto*0.6);
+  mostrar() {
+    noStroke();
+    fill(red(this.color), green(this.color), blue(this.color), this.vida);
+    circle(this.x, this.y, this.tamano);
   }
 }
 
 // ============================================================
-// FUNCIONES PRINCIPALES
+// INTERACCIÓN CON TECLADO (reinicio)
 // ============================================================
-
-function setup() {
-  createCanvas(800, 400);
-  cargarNivel(nivelActual);
-}
-
-function cargarNivel(indice) {
-  let datos = nivelesData[indice];
-  bloques = [];
-  enemigos = [];
-  monedas = [];
-  
-  // Crear bloques a partir de la matriz de suelo
-  for (let fila = 0; fila < datos.suelo.length; fila++) {
-    let linea = datos.suelo[fila];
-    for (let col = 0; col < linea.length; col++) {
-      let caracter = linea[col];
-      let x = col * tamañoBloque;
-      let y = fila * tamañoBloque;
-      if (caracter === '#') {
-        bloques.push(new Bloque(x, y, 'suelo'));
-      } else if (caracter === '?') {
-        bloques.push(new Bloque(x, y, '?'));
-      }
-    }
-  }
-  
-  // Agregar enemigos
-  for (let e of datos.enemigos) {
-    enemigos.push(new Enemigo(e[0] * tamañoBloque, e[1] * tamañoBloque));
-  }
-  
-  // Agregar monedas
-  for (let m of datos.monedas) {
-    monedas.push(new Moneda(m[0] * tamañoBloque, m[1] * tamañoBloque));
-  }
-  
-  // Crear Mario
-  mario = new Mario(100, 300);
-  camX = 0;
-  juegoActivo = true;
-}
-
-function cambiarNivel(delta) {
-  nivelActual += delta;
-  if (nivelActual >= nivelesData.length) {
-    // Ganaste
-    textSize(40);
-    fill(255, 255, 0);
-    text("¡FELICIDADES! COMPLETASTE 5 MUNDOS", width/2, height/2);
-    juegoActivo = false;
-    return;
-  }
-  cargarNivel(nivelActual);
-}
-
-function perderVida() {
-  vidas--;
-  if (vidas <= 0) {
-    textSize(40);
-    fill(255, 0, 0);
-    text("GAME OVER", width/2, height/2);
-    juegoActivo = false;
-  } else {
-    // Reiniciar nivel
-    cargarNivel(nivelActual);
-  }
-}
-
-function draw() {
-  if (!juegoActivo) {
-    background(0);
-    textAlign(CENTER);
-    textSize(30);
-    fill(255);
-    text("Presiona R para reiniciar", width/2, height/2 + 50);
-    return;
-  }
-  
-  // Fondo según nivel
-  let bg = nivelesData[nivelActual].fondo;
-  background(bg[0], bg[1], bg[2]);
-  
-  // Actualizar cámara
-  camX = constrain(mario.x + mario.ancho/2 - width/2, 0, niveles[nivelActual].ancho * tamañoBloque - width);
-  translate(-camX, 0);
-  
-  // Dibujar bloques
-  for (let bloque of bloques) bloque.dibujar();
-  
-  // Actualizar y dibujar monedas
-  for (let i = monedas.length-1; i >= 0; i--) {
-    let moneda = monedas[i];
-    moneda.dibujar();
-    if (!moneda.coleccionada && mario.x + mario.ancho > moneda.x && mario.x < moneda.x + moneda.ancho &&
-        mario.y + mario.alto > moneda.y && mario.y < moneda.y + moneda.alto) {
-      moneda.coleccionada = true;
-      puntuacion += 100;
-    }
-  }
-  
-  // Actualizar y dibujar enemigos
-  for (let i = enemigos.length-1; i >= 0; i--) {
-    let e = enemigos[i];
-    e.actualizar();
-    e.dibujar();
-    if (e.colisionConMario(mario)) {
-      if (mario.vy > 0 && mario.y + mario.alto - mario.vy <= e.y + 10) {
-        // Mario aplasta al enemigo
-        enemigos.splice(i,1);
-        mario.vy = -6;
-        puntuacion += 200;
-      } else {
-        perderVida();
-      }
-    }
-  }
-  
-  // Actualizar y dibujar Mario
-  mario.actualizar();
-  mario.dibujar();
-  
-  // Mostrar HUD
-  resetMatrix();
-  fill(255);
-  textSize(20);
-  text("Puntos: " + puntuacion, 10, 30);
-  text("Vidas: " + vidas, 10, 60);
-  text("Nivel: " + (nivelActual+1), 10, 90);
-  
-  // Indicador de fin de nivel
-  let finX = niveles[nivelActual].ancho * tamañoBloque;
-  fill(255, 0, 0);
-  rect(finX - 40, height-80, 40, 80);
-}
-
 function keyPressed() {
   if (key === 'r' || key === 'R') {
-    vidas = 3;
-    puntuacion = 0;
-    nivelActual = 0;
-    cargarNivel(0);
-  }
-  if (key === 'n' || key === 'N') {
-    cambiarNivel(1);
+    reiniciarJuego();
   }
 }
+
+function reiniciarJuego() {
+  juegoActivo = true;
+  puntuacion = 0;
+  vidas = 3;
+  objetos = [];
+  particulas = [];
+  historialPosiciones = [];
+  naveXSuave = width / 2;
+  targetX = width / 2;
+  naveX = width / 2;
+}
+
+// ============================================================
+// INTERACCIÓN CON MOUSE (control adicional)
+// ============================================================
+function mousePressed() {
+  // Si el juego no está activo, también se puede reiniciar con clic en botón imaginario
+  if (!juegoActivo && mouseX > width/2 - 50 && mouseX < width/2 + 50 && mouseY > height/2 + 40 && mouseY < height/2 + 80) {
+    reiniciarJuego();
+  }
+}
+
+// ============================================================
+// NOTA: Para mejor experiencia, ejecutar en p5.js Web Editor o local
+// ============================================================
